@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<!-- saved from url=(0040)file:///C:/Users/st_lo/Desktop/clan.html -->
+<html lang="ru"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Клановый обмен предметами</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', Roboto, sans-serif;
+    background: #1a1d24;
+    color: #e6e6e6;
+    margin: 0;
+    padding: 30px 20px;
+  }
+  h1 {
+    text-align: center;
+    color: #ffcc66;
+    margin-bottom: 25px;
+    text-shadow: 0 0 12px rgba(255,204,102,.4);
+  }
+  .toolbar {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  button {
+    background: #2c3140;
+    color: #e6e6e6;
+    border: 1px solid #3f4657;
+    padding: 10px 18px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: .2s;
+  }
+  button:hover { background: #3a4152; border-color: #ffcc66; }
+  button.danger { border-color: #7a2e2e; color: #ff9b9b; }
+  button.danger:hover { background: #4a1f1f; }
+  button.add { background: #2e5a3a; border-color: #4caf50; }
+  button.add:hover { background: #3a7048; }
+
+  .counter {
+    text-align: center;
+    color: #888;
+    font-size: 13px;
+    margin-bottom: 15px;
+  }
+
+  table {
+    width: 100%;
+    max-width: 1250px;
+    margin: 0 auto;
+    border-collapse: collapse;
+    background: #232733;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 8px 30px rgba(0,0,0,.5);
+  }
+  th {
+    background: #2c3140;
+    color: #ffcc66;
+    padding: 14px 12px;
+    text-align: left;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    border-bottom: 2px solid #3f4657;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  td {
+    padding: 8px 12px;
+    border-bottom: 1px solid #2e3342;
+    vertical-align: top;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #282d3b; }
+
+  input, textarea {
+    width: 100%;
+    background: #1a1d24;
+    border: 1px solid #3f4657;
+    color: #e6e6e6;
+    padding: 8px 10px;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 14px;
+    resize: vertical;
+  }
+  input:focus, textarea:focus {
+    outline: none;
+    border-color: #ffcc66;
+    box-shadow: 0 0 0 2px rgba(255,204,102,.15);
+  }
+  input[type="date"] { color-scheme: dark; }
+  textarea { min-height: 60px; }
+
+  .items-cell { min-width: 360px; }
+  .actions { width: 90px; text-align: center; }
+  .num { width: 50px; text-align: center; color: #888; }
+
+  .item-row {
+    display: grid;
+    grid-template-columns: 1fr 150px auto auto;
+    gap: 6px;
+    margin-bottom: 6px;
+    align-items: center;
+  }
+  .item-row .del-item {
+    background: transparent;
+    border: none;
+    color: #ff7a7a;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 0 6px;
+    line-height: 1;
+  }
+  .item-row .del-item:hover { color: #ff4444; }
+  .item-row .today-btn {
+    background: #2c3140;
+    border: 1px solid #3f4657;
+    color: #ffcc66;
+    font-size: 12px;
+    padding: 6px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  .item-row .today-btn:hover { background: #3a4152; }
+  .add-item {
+    font-size: 12px;
+    padding: 5px 10px;
+    background: #2c3140;
+    border-radius: 6px;
+    margin-top: 4px;
+  }
+  .empty-hint {
+    text-align: center;
+    color: #777;
+    padding: 40px;
+    font-style: italic;
+  }
+  .items-header {
+    display: grid;
+    grid-template-columns: 1fr 150px;
+    gap: 6px;
+    font-size: 11px;
+    color: #888;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+    padding: 0 2px;
+  }
+  .search-bar {
+    max-width: 1250px;
+    margin: 0 auto 15px;
+    display: flex;
+    gap: 10px;
+  }
+  .search-bar input {
+    flex: 1;
+    padding: 10px 14px;
+    font-size: 15px;
+  }
+</style>
+</head>
+<body>
+
+<h1>⚔️ Клановый обмен предметами</h1>
+
+<div class="toolbar">
+  <button class="add" onclick="addMember()">＋ Добавить участника</button>
+  <button onclick="sortAlphabetically()">🔤 Сортировать по алфавиту</button>
+  <button onclick="exportJSON()">📤 Экспорт JSON</button>
+  <button onclick="document.getElementById(&#39;importFile&#39;).click()">📥 Импорт JSON</button>
+  <input type="file" id="importFile" accept=".json" hidden="" onchange="importJSON(event)">
+  <button class="danger" onclick="clearAll()">🗑 Очистить всё</button>
+</div>
+
+<div class="search-bar">
+  <input type="text" id="searchInput" placeholder="🔍 Поиск по нику или предмету..." oninput="filterTable()">
+</div>
+
+<div class="counter" id="counter">Участников: 37   •   Всего предметов: 58</div>
+
+<table>
+  <thead>
+    <tr>
+      <th class="num">#</th>
+      <th style="width:180px">Никнейм</th>
+      <th style="width:130px">Роль</th>
+      <th class="items-cell">Полученные предметы и даты</th>
+      <th style="width:160px">Заметки</th>
+      <th class="actions">Действия</th>
+    </tr>
+  </thead>
+  <tbody id="tbody"><tr data-search="@adv_nikulin_sevas участник guard 404 armor spear of hephaestus @j_trs передает
+@vnikopoll передает"><td class="num">1</td><td><input placeholder="Ник"></td><td><input placeholder="Роль"></td><td class="items-cell"><div class="items-header"><span>Предмет</span><span>Дата получения</span></div><div><div class="item-row"><input placeholder="Название предмета"><input type="date"><button class="today-btn" title="Установить текущую дату">Сегодня</button><button class="del-item" title="Удалить предмет">✕</button></div><div class="item-row"><input placeholder="Название предмета"><input type="date"><button class="today-btn" title="Установить текущую дату">Сегодня</button><button class="del-item" title="Удалить предмет">✕</button></div></div><button class="add-item">＋ предмет</button></td><td><textarea placeholder="Заметка..."></textarea></td><td class="actions"><button class="danger" title="Удалить участника">✕</button></td></tr><tr data-search="@aleksandr_1989gur участник harry hamster&#39;s cloth @j_trs передает"><td class="num">2</td><td><input placeholder="Ник"></td><td><input placeholder="Роль"></td><td class="items-cell"><div class="items-header"><span>Предмет</span><span>Дата получения</span></div><div><div class="item-row"><input placeholder="Название предмета"><input type="date"><button class="today-btn" title="Установить текущую дату">Сегодня</button><button class="del-item" title="Удалить предмет">✕</button></div></div><button class="add-item">＋ предмет</button></td><td><textarea placeholder="Заметка..."></textarea></td><td class="actions"><button class="danger" title="Удалить участника">✕</button></td></tr><tr data-search="@andrey44118 участник ares&#39;s gloves amulet of the hollow eye loki&#39;s staff @adv_nikulin_sevas передает
+@j_trs передает
+@dew_3 передает"><td class="num">3</td><td><input placeholder="Ник"></td><td><input placeholder="Роль"></td><td class="items-cell"><div class="items-header"><span>Предмет</span><span>Дата получения</span></div><div><div class="item-row"><input placeholder="Название предмета"><input type="date"><button class="today-btn" title="Установить текущую дату">Сегодня</button><button class="del-item" title="Удалить предмет">✕</button></div><div class="item-row"><input placeholder="Название предмета"><input type="date"><button class="today-btn" title="Установить текущую дату">Сегодня</button><button class="del-item" title="Удалить предмет">✕</button></div><div class="item-row"><input placeholder="Название предмета"><input type="date"><button class="today-btn" title="Установить текущую дату">Сегодня</button><button class="del-item" title="Удалить предмет">✕</button></div></div><button class="add-item">＋ предмет</button></td><td><textarea placeholder="Заметка..."></textarea></td><td class="actions"><button class="danger" title="Удалить участника">✕</button></td></tr><tr data-search="@armor87a, @armor87a, @armor87r участник mjonlir amulet termination studs hephaestus&#39;s helmet hunters fang trophy band ring of celestial convergence передает между персонажами.
+@nik_sidorov передаёт
+@heiiiutb передаёт
+@evgenp3 передаёт
+@baltimor7779 передаёт
+@zeemonkee передаёт"><td class="num">4</td><td><input placeholder="Ник"></td><td><input placeholder="Роль"></td><td class="items-cell"><div class="items-header"><span>Предмет</span><span>Дата получения</span></div><div><div class="item-row"><input placeholder="Название предмета"><input type="date"><button class="today-btn" title="Установить текущую дату">Сегодня</button><button class="del-item" title="Удалить предмет">✕</button></div><div class="item-row"><input placeholder="Название предмета"><input type="date"><button class="today-btn" title="Установить текущую дату">Сегодня</button><button class="del-item" title="Удалить предмет">✕</button></div><div class="item-row"><input placeholder="Название предмета"><input type="date"><button class="today-btn" title="Установить текущую дату">Сегодня</button><button class="del-item" title="Удалить предмет">✕</button></div><div class="item-row"><input placeholder="Название предмета"><input type="date"><button class="today-btn" title="Установить текущую дату">Сегодня</button><button class="del-item" title="Удалить предмет">✕</button></div><div class="item-row"><input placeholder="Название предмета"><input type="date"><button class="today-btn" title="Установить текущую дату">Сегодня</button><button class="del-item" title="Удалить предмет">✕</button></div><div class="item-row"><input placeholder="Название предмета"><input type="date"><button class="today-btn" title="Установить текущую дату">Сегодня</button><button class="del-item" title="Удалить предмет">✕</button></div></div><button class="add-item">＋ предмет</button></td><td><textarea placeholder="Заметка..."></textarea></td><td class="actions"><button class="danger" title="Удалить участника">✕</button></td></tr><tr data-search="@artem54a участник gorgon&#39;s armor gorgon&#39;s spear @grgr757 передаёт
+@zeemonkee передает"><td class="num">5</td><td><input placeholder="Ник"></td><td><input placeholder="Роль"></td><td class="items-cell"><div class="items-header"><span>Предмет</span><span>Дата получения</span></div><div><div class="item-row"><input placeholder="Название предмета"><input type="date"><button class="today-btn" title="Установить текущую дату">Сегодня</button><button class="del-item" title="Удалить предмет">✕</button></div><div class="item-row"><input placeholder="Название предмета"><input type="date"><button class="today-btn" title="Установить текущую дату">Сегодня</button><button class="del-item" title="Удалить предмет">✕</button></div></div><button class="add-item">＋ предмет</button></td><td><textarea placeholder="Заметка..."></textarea></td><td class="actions"><button class="danger" title="Удалить участника">✕</button></td></tr><tr data-search="@baltimor7779 участник medusa&#39;s bracelet ring of hanged wisdom @heiiiutb передает
+@happinessgerl передает"><td class="num">6</td><td><input placeholder="Ник"></td><td><input placeholder="Роль"></td><td class="items-cell"><div class="items-header"><span>Предмет</span><span>Дата получения</span></div><div><div class="item-row"><input placeholder="Название предмета"><input type="date"><button class="today-btn" title="Установить текущую дату">Сегодня</button><button class="del-item" title="Удалить предмет">✕</button></div><div class="item-row"><input placeholder="Название предмета"><input type="date"><button class="today-btn" title="Установить текущую дату">Сегодня</button><button class="del-item" title="Удалить предмет">✕</button></div></div><button class="add-item">＋ предмет</button></td><td><textarea placeholder="Заметка..."></textarea></td><td class="actions"><button class="danger" title="Удалить участника">✕</button></td></tr><tr data-search="@dew_3 участник  "><td class="num">7</td><td><input placeholder="Ник"></td><td><input placeholder="Роль"></td><td class="items-cell"><div class="items-header"><span>Предмет</span><span>Дата получения</span></div><div><div style="color: rgb(102, 102, 102); font-size: 13px; margin-bottom: 6px;">нет предметов</div></div><button class="add-item">＋ предмет</button></td><td><textarea placeholder="Заметка..."></textarea></td><td class="actions"><button class="danger" title="Удалить участника">✕</button></td></tr><tr data-search="@dimakolobov1990 участник termination studs ring of celestial convergence @zku5z передает
+@j_trs передает"><td class="num">8</td><td><input placeholder="Ник"></td><td><input placeholder="Роль"></td><td class="items-cell"><div class="items-header"><span>Предмет</span><span>Дата получения</span></div><div><div class="item-row"><input placeholder="Название предмета"><input type="date"><button class="today-btn" title="Установить текущую дату">Сегодня</button><button class="del-item" title="Удалить предмет">✕</button></div><div class="item-row"><input placeholder="Название предмета"><input type="date"><button class="today-btn" title="Установить текущую дату">Сегодня</button><button class="del-item" title="Удалить предмет">✕</button></div></div><button class="add-item">＋ предмет</button></td><td><textarea placeholder="Заметка..."></textarea></td><td class="actions"><button class="danger" title="Удалить участника">✕</button></td></tr><tr data-search="@evgenp3 участник trophy band red eye core earrings of gungnir’s whisper @lubczyk передаёт
+@armor87m передаёт
+@zeemonkee передает"><td class="num">9</td><td><input placeholder="Ник"></td><td><input placeholder="Роль"></td><td class="items-cell"><div class="items-header"><span>Предмет</span><span>Дата получения</span></div><div><div class="item-row"><input placeholder="Название предмета"><input type="date"><button class="today-btn" title="Установить текущую дату">Сегодня</button><button class="del-item" title="Удалить предмет">✕</button></div><div class="item-row"><input placeholder="Название предмета"><input type="date"><button class="today-btn" title="Установить текущую дату">Сегодня</button><button class="del-item" title="Удалить предмет">✕</button></div><div class="item-row"><input placeholder="Название предмета"><input type="date"><button class="today-btn" title="Установить текущую дату">Сегодня</button><button class="del-item" title="Удалить предмет">✕</button></div></div><button class="add-item">＋ предмет</button></td><td><textarea placeholder="Заметка..."></textarea></td><td class="actions"><button class="danger" title="Удалить участника">✕</button></td></tr><tr data-search="@grgr757 участник  "><td class="num">10</td><td><input placeholder="Ник"></td><td><input placeholder="Роль"></td><td class="items-cell"><div class="items-header"><span>Предмет</span><span>Дата получения</span></div><div><div style="color: rgb(102, 102, 102); font-size: 13px; margin-bottom: 6px;">нет предметов</div></div><button class="add-item">＋ предмет</button></td><td><textarea placeholder="Заметка..."></textarea></td><td class="actions"><button class="danger" title="Удалить участника">✕</button></td></tr><tr data-search="@happinessgerl участник frostwyrm blade @vnikopoll передает"><td class="num">11</td><td><input placeholder="Ник"></td><td><input placeholder="Роль"></td><td class="items-cell"><div class="items-header"><span>Предмет</span><span>Дата получения</span></div><div><div class="item-row"><input placeholder="Название предмета"><input type="date"><button class="today-btn" title="Установить текущую дату">Сегодня</button><button class="del-item" title="Удалить предмет">✕</button></div></div><button class="add-item">＋ предмет</button></td><td><textarea placeholder="Заметка..."></textarea></td><td class="actions"><button class="danger" title="Удалить участника">✕</button></td></tr><tr data-search="@heiiiutb участник ares&#39;s helmet moonveil ralment @baltimor7779 передает
+@jurbidondor передает"><td class="num">12</td><td><input placeholder="Ник"></td><td><input placeholder="Роль"></td><td class="items-cell"><div class="items-header"><span>Предмет</span><span>Дата получения</span></div><div><div class="item-row"><input placeholder="Название предмета"><input type="date"><button class="today-btn" title="Установить текущую дату">Сегодня</button><button class="del-item" title="Удалить предмет">✕</button></div><div class="item-row"><input placeholder="Название предмета"><input type="date"><button class="today-btn" title="Установить текущую дату">Сегодня</button><button class="del-item" title="Удалить предмет">✕</button></div></div><button class="add-item">＋ предмет</button></td><td><textarea placeholder="Заметка..."></textarea></td><td class="actions"><button class="danger" title="Удалить участника">✕</button></td></tr><tr data-search="@igdean1 участник  "><td class="num">13</td><td><input placeholder="Ник"></td><td><input placeholder="Роль"></td><td class="items-cell"><div class="items-header"><span>Предмет</span><span>Дата получения</span></div><div><div style="color: rgb(102, 102, 102); font-size: 13px; margin-bottom: 6px;">нет предметов</div></div><button class="add-item">＋ предмет</button></td><td><textarea placeholder="Заметка..."></textarea></td><td class="actions"><button class="danger" title="Удалить участника">✕</button></td></tr><tr data-search="@j_trs участник bloodscale grips @zeemonkee передает"><td class="num">14</td><td><input placeholder="Ник"></td><td><input placeholder="Роль"></td><td class="items-cell"><div class="items-header"><span>Предмет</span><span>Дата получения</span></div><div><div class="item-row"><input placeholder="Название предмета"><input type="date"><button class="today-btn" title="Установить текущую дату">Сегодня</button><button class="del-item" title="Удалить предмет">✕</button></div></div><button class="add-item">＋ предмет</button></td><td><textarea placeholder="Заметка..."></textarea></td><td class="actions"><button class="danger" title="Удалить участника">✕</button></td></tr><tr data-search="@jurbidondor участник skynet chain @heiiiutb передает"><td class="num">15</td><td><input placeholder="Ник"></td><td><input placeholder="Роль"></td><td class="items-cell"><div class="items-header"><span>Предмет</span><span>Дата получения</span></div><div><div class="item-row"><input placeholder="Название предмета"><input type="date"><button class="today-btn" title="Установить текущую дату">Сегодня</button><button class="del-item" title="Удалить предмет">✕</button></div></div><button class="add-item">＋ предмет</button></td><td><textarea placeholder="Заметка..."></textarea></td><td class="actions"><button class="danger" title="Удалить участника">✕</button></td></tr><tr data-search="@kabotagnik участник mjonlir amulet ring of hanged wisdom @trnh130 передает
+@happinessgerl передает"><td class="num">16</td><td><input placeholder="Ник"></td><td><input placeholder="Роль"></td><td class="items-cell"><div class="items-header"><span>Предмет</span><span>Дата получения</span></div><div><div class="item-row"><input placeholder="Название предмета"><input type="date"><button class="today-btn" title="Установить текущую дату">Сегодня</button><button class="del-item" title="Удалить предмет">✕</button></div><div class="item-row"><input placeholder="Название предмета"><input type="date"><button class="today-btn" title="Установить текущую дату">Сегодня</button><button class="del-item" title="Удалить предмет">✕</button></div></div><button class="add-item">＋ предмет</button></td><td><textarea placeholder="Заметка..."></textarea></td><td class="actions"><button class="danger" title="Удалить участника">✕</button></td></tr><tr data-search="@kvirtu_92 участник  "><td class="num">17</td><td><input placeholder="Ник"></td><td><input placeholder="Роль"></td><td class="items-cell"><div class="items-header"><span>Предмет</span><span>Дата получения</span></div><div><div style="color: rgb(102, 102, 102); font-size: 13px; margin-bottom: 6px;">нет предметов</div></div><button class="add-item">＋ предмет</button></td><td><textarea placeholder="Заметка..."></textarea></td><td class="actions"><button class="danger" title="Удалить участника">✕</button></td></tr><tr data-search="@lelenall1 участник spear of ares anubis&#39;s helmet @nik_sidorov
+@happinessgerl передает"><td class="num">18</td><td><input placeholder="Ник"></td><td><input placeholder="Роль"></td><td class="items-cell"><div class="items-header"><span>Предмет</span><span>Дата получения</span></div><div><div class="item-row"><input placeholder="Название предмета"><input type="date"><button class="today-btn" title="Установить текущую дату">Сегодня</button><button class="del-item" title="Удалить предмет">✕</button></div><div class="item-row"><input placeholder="Название предмета"><input type="date"><button class="today-btn" title="Установить текущую дату">Сегодня</button><button class="del-item" title="Удалить предмет">✕</button></div></div><button class="add-item">＋ предмет</button></td><td><textarea placeholder="Заметка..."></textarea></td><td class="actions"><button class="danger" title="Удалить участника">✕</button></td></tr><tr data-search="@lexa02121985 участник  "><td class="num">19</td><td><input placeholder="Ник"></td><td><input placeholder="Роль"></td><td class="items-cell"><div class="items-header"><span>Предмет</span><span>Дата получения</span></div><div><div style="color: rgb(102, 102, 102); font-size: 13px; margin-bottom: 6px;">нет предметов</div></div><button class="add-item">＋ предмет</button></td><td><textarea placeholder="Заметка..."></textarea></td><td class="actions"><button class="danger" title="Удалить участника">✕</button></td></tr><tr data-search="@lalekseil участник forsaken anubis boots skynet chain @zeemonkee передаёт
+@happinessgerl передает"><td class="num">20</td><td><input placeholder="Ник"></td><td><input placeholder="Роль"></td><td class="items-cell"><div class="items-header"><span>Предмет</span><span>Дата получения</span></div><div><div class="item-row"><input placeholder="Название предмета"><input type="date"><button class="today-btn" title="Установить текущую дату">Сегодня</button><button class="del-item" title="Удалить предмет">✕</button></div><div class="item-row"><input placeholder="Название предмета"><input type="date"><button class="today-btn" title="Установить текущую дату">Сегодня</button><button class="del-item" title="Удалить предмет">✕</button></div></div><button class="add-item">＋ предмет</button></td><td><textarea placeholder="Заметка..."></textarea></td><td class="actions"><button class="danger" title="Удалить участника">✕</button></td></tr><tr data-search="@muumipappara участник  "><td class="num">21</td><td><input placeholder="Ник"></td><td><input placeholder="Роль"></td><td class="items-cell"><div class="items-header"><span>Предмет</span><span>Дата получения</span></div><div><div style="color: rgb(102, 102, 102); font-size: 13px; margin-bottom: 6px;">нет предметов</div></div><button class="add-item">＋ предмет</button></td><td><textarea placeholder="Заметка..."></textarea></td><td class="actions"><button class="danger" title="Удалить участника">✕</button></td></tr><tr data-search="@nik_sidorov участник red eye core @dimakolobov1990 передает"><td class="num">22</td><td><input placeholder="Ник"></td><td><input placeholder="Роль"></td><td class="items-cell"><div class="items-header"><span>Предмет</span><span>Дата получения</span></div><div><div class="item-row"><input placeholder="Название предмета"><input type="date"><button class="today-btn" title="Установить текущую дату">Сегодня</button><button class="del-item" title="Удалить предмет">✕</button></div></div><button class="add-item">＋ предмет</button></td><td><textarea placeholder="Заметка..."></textarea></td><td class="actions"><button class="danger" title="Удалить участника">✕</button></td></tr><tr data-search="@parinov444 участник  "><td class="num">23</td><td><input placeholder="Ник"></td><td><input placeholder="Роль"></td><td class="items-cell"><div class="items-header"><span>Предмет</span><span>Дата получения</span></div><div><div style="color: rgb(102, 102, 102); font-size: 13px; margin-bottom: 6px;">нет предметов</div></div><button class="add-item">＋ предмет</button></td><td><textarea placeholder="Заметка..."></textarea></td><td class="actions"><button class="danger" title="Удалить участника">✕</button></td></tr><tr data-search="@p_fes участник loki&#39;s boots anubis’s gloves @zeemonkee передает
+@zeemonkee передает"><td class="num">24</td><td><input placeholder="Ник"></td><td><input placeholder="Роль"></td><td class="items-cell"><div class="items-header"><span>Предмет</span><span>Дата получения</span></div><div><div class="item-row"><input placeholder="Название предмета"><input type="date"><button class="today-btn" title="Установить текущую дату">Сегодня</button><button class="del-item" title="Удалить предмет">✕</button></div><div class="item-row"><input placeholder="Название предмета"><input type="date"><button class="today-btn" title="Установить текущую дату">Сегодня</button><button class="del-item" title="Удалить предмет">✕</button></div></div><button class="add-item">＋ предмет</button></td><td><textarea placeholder="Заметка..."></textarea></td><td class="actions"><button class="danger" title="Удалить участника">✕</button></td></tr><tr data-search="@rushummerh2 участник argenta (эпическую капибару) red eye core @oligarxlight передает
+@grgr757 передает"><td class="num">25</td><td><input placeholder="Ник"></td><td><input placeholder="Роль"></td><td class="items-cell"><div class="items-header"><span>Предмет</span><span>Дата получения</span></div><div><div class="item-row"><input placeholder="Название предмета"><input type="date"><button class="today-btn" title="Установить текущую дату">Сегодня</button><button class="del-item" title="Удалить предмет">✕</button></div><div class="item-row"><input placeholder="Название предмета"><input type="date"><button class="today-btn" title="Установить текущую дату">Сегодня</button><button class="del-item" title="Удалить предмет">✕</button></div></div><button class="add-item">＋ предмет</button></td><td><textarea placeholder="Заметка..."></textarea></td><td class="actions"><button class="danger" title="Удалить участника">✕</button></td></tr><tr data-search="@seeergeeeiii участник sword of apollo @zku5z передаёт"><td class="num">26</td><td><input placeholder="Ник"></td><td><input placeholder="Роль"></td><td class="items-cell"><div class="items-header"><span>Предмет</span><span>Дата получения</span></div><div><div class="item-row"><input placeholder="Название предмета"><input type="date"><button class="today-btn" title="Установить текущую дату">Сегодня</button><button class="del-item" title="Удалить предмет">✕</button></div></div><button class="add-item">＋ предмет</button></td><td><textarea placeholder="Заметка..."></textarea></td><td class="actions"><button class="danger" title="Удалить участника">✕</button></td></tr><tr data-search="@shturman6060 участник  earrings of gungnir&#39;s whisper @happinessgerl передает "><td class="num">27</td><td><input placeholder="Ник"></td><td><input placeholder="Роль"></td><td class="items-cell"><div class="items-header"><span>Предмет</span><span>Дата получения</span></div><div><div class="item-row"><input placeholder="Название предмета"><input type="date"><button class="today-btn" title="Установить текущую дату">Сегодня</button><button class="del-item" title="Удалить предмет">✕</button></div></div><button class="add-item">＋ предмет</button></td><td><textarea placeholder="Заметка..."></textarea></td><td class="actions"><button class="danger" title="Удалить участника">✕</button></td></tr><tr data-search="@soe_tien участник pharaoh&#39;s earrings @zeemonkee передает"><td class="num">28</td><td><input placeholder="Ник"></td><td><input placeholder="Роль"></td><td class="items-cell"><div class="items-header"><span>Предмет</span><span>Дата получения</span></div><div><div class="item-row"><input placeholder="Название предмета"><input type="date"><button class="today-btn" title="Установить текущую дату">Сегодня</button><button class="del-item" title="Удалить предмет">✕</button></div></div><button class="add-item">＋ предмет</button></td><td><textarea placeholder="Заметка..."></textarea></td><td class="actions"><button class="danger" title="Удалить участника">✕</button></td></tr><tr data-search="@surajguru участник gorgon&#39;s helmet dagger of anubis ritual poseidon&#39;s trident footpads of the crawling ooze ritual poseidon&#39;s helmet @nik_sidorov передает
+@oligarxlight передает
+@zeemonkee передает
+@f2f_andy передает
+@happinessgerl передает"><td class="num">29</td><td><input placeholder="Ник"></td><td><input placeholder="Роль"></td><td class="items-cell"><div class="items-header"><span>Предмет</span><span>Дата получения</span></div><div><div class="item-row"><input placeholder="Название предмета"><input type="date"><button class="today-btn" title="Установить текущую дату">Сегодня</button><button class="del-item" title="Удалить предмет">✕</button></div><div class="item-row"><input placeholder="Название предмета"><input type="date"><button class="today-btn" title="Установить текущую дату">Сегодня</button><button class="del-item" title="Удалить предмет">✕</button></div><div class="item-row"><input placeholder="Название предмета"><input type="date"><button class="today-btn" title="Установить текущую дату">Сегодня</button><button class="del-item" title="Удалить предмет">✕</button></div><div class="item-row"><input placeholder="Название предмета"><input type="date"><button class="today-btn" title="Установить текущую дату">Сегодня</button><button class="del-item" title="Удалить предмет">✕</button></div><div class="item-row"><input placeholder="Название предмета"><input type="date"><button class="today-btn" title="Установить текущую дату">Сегодня</button><button class="del-item" title="Удалить предмет">✕</button></div></div><button class="add-item">＋ предмет</button></td><td><textarea placeholder="Заметка..."></textarea></td><td class="actions"><button class="danger" title="Удалить участника">✕</button></td></tr><tr data-search="@swar89 участник  "><td class="num">30</td><td><input placeholder="Ник"></td><td><input placeholder="Роль"></td><td class="items-cell"><div class="items-header"><span>Предмет</span><span>Дата получения</span></div><div><div style="color: rgb(102, 102, 102); font-size: 13px; margin-bottom: 6px;">нет предметов</div></div><button class="add-item">＋ предмет</button></td><td><textarea placeholder="Заметка..."></textarea></td><td class="actions"><button class="danger" title="Удалить участника">✕</button></td></tr><tr data-search="@trnh130 участник trophy band gorgon&#39;s boots @kabotagnik передает
+@zeemonkee передает"><td class="num">31</td><td><input placeholder="Ник"></td><td><input placeholder="Роль"></td><td class="items-cell"><div class="items-header"><span>Предмет</span><span>Дата получения</span></div><div><div class="item-row"><input placeholder="Название предмета"><input type="date"><button class="today-btn" title="Установить текущую дату">Сегодня</button><button class="del-item" title="Удалить предмет">✕</button></div><div class="item-row"><input placeholder="Название предмета"><input type="date"><button class="today-btn" title="Установить текущую дату">Сегодня</button><button class="del-item" title="Удалить предмет">✕</button></div></div><button class="add-item">＋ предмет</button></td><td><textarea placeholder="Заметка..."></textarea></td><td class="actions"><button class="danger" title="Удалить участника">✕</button></td></tr><tr data-search="@valmsei участник amulet of the hillow eye @happinessgerl передает"><td class="num">32</td><td><input placeholder="Ник"></td><td><input placeholder="Роль"></td><td class="items-cell"><div class="items-header"><span>Предмет</span><span>Дата получения</span></div><div><div class="item-row"><input placeholder="Название предмета"><input type="date"><button class="today-btn" title="Установить текущую дату">Сегодня</button><button class="del-item" title="Удалить предмет">✕</button></div></div><button class="add-item">＋ предмет</button></td><td><textarea placeholder="Заметка..."></textarea></td><td class="actions"><button class="danger" title="Удалить участника">✕</button></td></tr><tr data-search="@vnikopoll участник red eye core ring of hanged wisdom earrings of gungnir’s whisper @j_trs передает
+@rushummerh2 передает
+@happinessgerl передает"><td class="num">33</td><td><input placeholder="Ник"></td><td><input placeholder="Роль"></td><td class="items-cell"><div class="items-header"><span>Предмет</span><span>Дата получения</span></div><div><div class="item-row"><input placeholder="Название предмета"><input type="date"><button class="today-btn" title="Установить текущую дату">Сегодня</button><button class="del-item" title="Удалить предмет">✕</button></div><div class="item-row"><input placeholder="Название предмета"><input type="date"><button class="today-btn" title="Установить текущую дату">Сегодня</button><button class="del-item" title="Удалить предмет">✕</button></div><div class="item-row"><input placeholder="Название предмета"><input type="date"><button class="today-btn" title="Установить текущую дату">Сегодня</button><button class="del-item" title="Удалить предмет">✕</button></div></div><button class="add-item">＋ предмет</button></td><td><textarea placeholder="Заметка..."></textarea></td><td class="actions"><button class="danger" title="Удалить участника">✕</button></td></tr><tr data-search="@yahoobot_r3w участник  "><td class="num">34</td><td><input placeholder="Ник"></td><td><input placeholder="Роль"></td><td class="items-cell"><div class="items-header"><span>Предмет</span><span>Дата получения</span></div><div><div style="color: rgb(102, 102, 102); font-size: 13px; margin-bottom: 6px;">нет предметов</div></div><button class="add-item">＋ предмет</button></td><td><textarea placeholder="Заметка..."></textarea></td><td class="actions"><button class="danger" title="Удалить участника">✕</button></td></tr><tr data-search="@zeemonkee участник ritual poseidon&#39;s trident pharaoh’s earrings dark lord boots amulet of the hollow eye @lalekseil передает
+@trnh130 передает
+@j_trs передает
+@happinessgerl передает"><td class="num">35</td><td><input placeholder="Ник"></td><td><input placeholder="Роль"></td><td class="items-cell"><div class="items-header"><span>Предмет</span><span>Дата получения</span></div><div><div class="item-row"><input placeholder="Название предмета"><input type="date"><button class="today-btn" title="Установить текущую дату">Сегодня</button><button class="del-item" title="Удалить предмет">✕</button></div><div class="item-row"><input placeholder="Название предмета"><input type="date"><button class="today-btn" title="Установить текущую дату">Сегодня</button><button class="del-item" title="Удалить предмет">✕</button></div><div class="item-row"><input placeholder="Название предмета"><input type="date"><button class="today-btn" title="Установить текущую дату">Сегодня</button><button class="del-item" title="Удалить предмет">✕</button></div><div class="item-row"><input placeholder="Название предмета"><input type="date"><button class="today-btn" title="Установить текущую дату">Сегодня</button><button class="del-item" title="Удалить предмет">✕</button></div></div><button class="add-item">＋ предмет</button></td><td><textarea placeholder="Заметка..."></textarea></td><td class="actions"><button class="danger" title="Удалить участника">✕</button></td></tr><tr data-search="@zhretts участник gorgon&#39;s boots ashen gorgon&#39;s armor trophy band @happinessgerl передает
+@happinessgerl передает
+@baltimor7779"><td class="num">36</td><td><input placeholder="Ник"></td><td><input placeholder="Роль"></td><td class="items-cell"><div class="items-header"><span>Предмет</span><span>Дата получения</span></div><div><div class="item-row"><input placeholder="Название предмета"><input type="date"><button class="today-btn" title="Установить текущую дату">Сегодня</button><button class="del-item" title="Удалить предмет">✕</button></div><div class="item-row"><input placeholder="Название предмета"><input type="date"><button class="today-btn" title="Установить текущую дату">Сегодня</button><button class="del-item" title="Удалить предмет">✕</button></div><div class="item-row"><input placeholder="Название предмета"><input type="date"><button class="today-btn" title="Установить текущую дату">Сегодня</button><button class="del-item" title="Удалить предмет">✕</button></div></div><button class="add-item">＋ предмет</button></td><td><textarea placeholder="Заметка..."></textarea></td><td class="actions"><button class="danger" title="Удалить участника">✕</button></td></tr><tr data-search="@zku5z участник  "><td class="num">37</td><td><input placeholder="Ник"></td><td><input placeholder="Роль"></td><td class="items-cell"><div class="items-header"><span>Предмет</span><span>Дата получения</span></div><div><div style="color: rgb(102, 102, 102); font-size: 13px; margin-bottom: 6px;">нет предметов</div></div><button class="add-item">＋ предмет</button></td><td><textarea placeholder="Заметка..."></textarea></td><td class="actions"><button class="danger" title="Удалить участника">✕</button></td></tr></tbody>
+</table>
+
+<script>
+const STORAGE_KEY = 'clan_table_data_v5';
+
+const INITIAL_MEMBERS = [
+  "adv_nikulin_sevas",
+  "Aleksandr_1989gur",
+  "Andrey44118",
+  "armor87",
+  "armor87a",
+  "armor87r",
+  "ARTEM54a",
+  "Baltimor7779",
+  "dew_3",
+  "Dimakolobov1990",
+  "Evgenp3",
+  "grgr757",
+  "HappinessGerl",
+  "HeIIIuTb",
+  "igdean1",
+  "J_Trs",
+  "Jurbidondor",
+  "Kabotagnik",
+  "KVIRTU_92",
+  "lelenall1",
+  "Lexa02121985",
+  "lAlekseil",
+  "MuumiPappara",
+  "nik_sidorov",
+  "Parinov444",
+  "P_Fes",
+  "RushummerH2",
+  "seeergeeeiii",
+  "shturman6060",
+  "Soe_tien",
+  "Surajguru",
+  "swar89",
+  "trnh130",
+  "valmsei",
+  "vnikopoll",
+  "yahoobot_r3w",
+  "zeemonkee",
+  "Zhretts",
+  "zku5z"
+];
+
+function today() {
+  const d = new Date();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${d.getFullYear()}-${m}-${day}`;
+}
+
+function defaultData() {
+  return INITIAL_MEMBERS.map(name => ({
+    name: '@' + name,
+    role: 'Участник',
+    items: [],
+    notes: ''
+  }));
+}
+
+let clanData = load() || defaultData();
+
+const tbody = document.getElementById('tbody');
+
+function load() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    return data.map(m => ({
+      ...m,
+      items: (m.items || []).map(it =>
+        typeof it === 'string' ? { name: it, date: '' } : it
+      )
+    }));
+  } catch { return null; }
+}
+
+function save() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(clanData));
+  updateCounter();
+}
+
+function updateCounter() {
+  const total = clanData.length;
+  const totalItems = clanData.reduce((sum, m) => sum + (m.items?.length || 0), 0);
+  document.getElementById('counter').textContent =
+    `Участников: ${total}   •   Всего предметов: ${totalItems}`;
+}
+
+// Сортировка по алфавиту (регистронезависимо, с учётом локали)
+function sortAlphabetically() {
+  clanData.sort((a, b) =>
+    (a.name || '').localeCompare(b.name || '', 'ru', { sensitivity: 'base' })
+  );
+  save();
+  render();
+}
+
+function render() {
+  tbody.innerHTML = '';
+
+  if (clanData.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" class="empty-hint">Список пуст. Добавьте первого участника.</td></tr>`;
+    updateCounter();
+    return;
+  }
+
+  clanData.forEach((member, idx) => {
+    const tr = document.createElement('tr');
+    tr.dataset.search = (member.name + ' ' + member.role + ' ' +
+      (member.items || []).map(i => i.name).join(' ') + ' ' + (member.notes || '')).toLowerCase();
+
+    const tdNum = document.createElement('td');
+    tdNum.className = 'num';
+    tdNum.textContent = idx + 1;
+    tr.appendChild(tdNum);
+
+    const tdName = document.createElement('td');
+    const inpName = document.createElement('input');
+    inpName.value = member.name;
+    inpName.placeholder = 'Ник';
+    inpName.oninput = e => {
+      member.name = e.target.value;
+      tr.dataset.search = (member.name + ' ' + member.role + ' ' +
+        (member.items || []).map(i => i.name).join(' ') + ' ' + (member.notes || '')).toLowerCase();
+      save();
+    };
+    tdName.appendChild(inpName);
+    tr.appendChild(tdName);
+
+    const tdRole = document.createElement('td');
+    const inpRole = document.createElement('input');
+    inpRole.value = member.role;
+    inpRole.placeholder = 'Роль';
+    inpRole.oninput = e => { member.role = e.target.value; save(); };
+    tdRole.appendChild(inpRole);
+    tr.appendChild(tdRole);
+
+    const tdItems = document.createElement('td');
+    tdItems.className = 'items-cell';
+
+    const header = document.createElement('div');
+    header.className = 'items-header';
+    header.innerHTML = `<span>Предмет</span><span>Дата получения</span>`;
+    tdItems.appendChild(header);
+
+    const itemsWrap = document.createElement('div');
+    renderItems(member, itemsWrap);
+    tdItems.appendChild(itemsWrap);
+
+    const btnAddItem = document.createElement('button');
+    btnAddItem.className = 'add-item';
+    btnAddItem.textContent = '＋ предмет';
+    btnAddItem.onclick = () => {
+      member.items.push({ name: '', date: today() });
+      save();
+      renderItems(member, itemsWrap);
+    };
+    tdItems.appendChild(btnAddItem);
+    tr.appendChild(tdItems);
+
+    const tdNotes = document.createElement('td');
+    const taNotes = document.createElement('textarea');
+    taNotes.value = member.notes || '';
+    taNotes.placeholder = 'Заметка...';
+    taNotes.oninput = e => { member.notes = e.target.value; save(); };
+    tdNotes.appendChild(taNotes);
+    tr.appendChild(tdNotes);
+
+    const tdAct = document.createElement('td');
+    tdAct.className = 'actions';
+    const btnDel = document.createElement('button');
+    btnDel.className = 'danger';
+    btnDel.textContent = '✕';
+    btnDel.title = 'Удалить участника';
+    btnDel.onclick = () => {
+      if (confirm(`Удалить "${member.name || 'без имени'}"?`)) {
+        clanData.splice(idx, 1);
+        save();
+        render();
+      }
+    };
+    tdAct.appendChild(btnDel);
+    tr.appendChild(tdAct);
+
+    tbody.appendChild(tr);
+  });
+
+  updateCounter();
+}
+
+function renderItems(member, container) {
+  container.innerHTML = '';
+  if (member.items.length === 0) {
+    const empty = document.createElement('div');
+    empty.style.cssText = 'color:#666;font-size:13px;margin-bottom:6px;';
+    empty.textContent = 'нет предметов';
+    container.appendChild(empty);
+  }
+  member.items.forEach((item, i) => {
+    const row = document.createElement('div');
+    row.className = 'item-row';
+
+    const inp = document.createElement('input');
+    inp.value = item.name;
+    inp.placeholder = 'Название предмета';
+    inp.oninput = e => { item.name = e.target.value; save(); };
+
+    const dateInp = document.createElement('input');
+    dateInp.type = 'date';
+    dateInp.value = item.date || '';
+    dateInp.onchange = e => { item.date = e.target.value; save(); };
+
+    const todayBtn = document.createElement('button');
+    todayBtn.className = 'today-btn';
+    todayBtn.textContent = 'Сегодня';
+    todayBtn.title = 'Установить текущую дату';
+    todayBtn.onclick = () => {
+      item.date = today();
+      dateInp.value = item.date;
+      save();
+    };
+
+    const del = document.createElement('button');
+    del.className = 'del-item';
+    del.textContent = '✕';
+    del.title = 'Удалить предмет';
+    del.onclick = () => {
+      member.items.splice(i, 1);
+      save();
+      renderItems(member, container);
+    };
+
+    row.appendChild(inp);
+    row.appendChild(dateInp);
+    row.appendChild(todayBtn);
+    row.appendChild(del);
+    container.appendChild(row);
+  });
+}
+
+function addMember() {
+  clanData.push({ name: '', role: 'Участник', items: [], notes: '' });
+  save();
+  render();
+}
+
+function clearAll() {
+  if (confirm('Удалить всех участников? Действие необратимо.')) {
+    clanData = [];
+    save();
+    render();
+  }
+}
+
+function filterTable() {
+  const q = document.getElementById('searchInput').value.toLowerCase().trim();
+  document.querySelectorAll('#tbody tr').forEach(tr => {
+    if (!tr.dataset.search) return;
+    tr.style.display = (!q || tr.dataset.search.includes(q)) ? '' : 'none';
+  });
+}
+
+function exportJSON() {
+  const blob = new Blob([JSON.stringify(clanData, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'clan_data.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importJSON(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (Array.isArray(data)) {
+        clanData = data.map(m => ({
+          name: m.name || '',
+          role: m.role || 'Участник',
+          items: (m.items || []).map(it =>
+            typeof it === 'string' ? { name: it, date: '' } : {
+              name: it.name || '',
+              date: it.date || ''
+            }
+          ),
+          notes: m.notes || ''
+        }));
+        save();
+        render();
+      } else alert('Неверный формат файла');
+    } catch { alert('Ошибка чтения JSON'); }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
+render();
+</script>
+
+</body></html>
